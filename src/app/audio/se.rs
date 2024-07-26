@@ -7,28 +7,24 @@ struct AudioData {
 }
 
 static SE_MAP: phf::Map<&'static str, AudioData> = phf_map! {
-    "erase" => AudioData {
-        path: "audio/se/erase.ogg",
+    "hit" => AudioData {
+        path: "audio/se/hit.ogg",
         volume_bias: 0.0,
     },
-    "pick_up" => AudioData {
-        path: "audio/se/pick_up.ogg",
+    "draw" => AudioData {
+        path: "audio/se/draw.ogg",
+        volume_bias: -0.5,
+    },
+    "knob" => AudioData {
+        path: "audio/se/knob.ogg",
         volume_bias: 0.0,
     },
-    "game_over" => AudioData {
-        path: "audio/se/game_over.ogg",
-        volume_bias: 0.0,
+    "success" => AudioData {
+        path: "audio/se/success.ogg",
+        volume_bias: 2.0,
     },
-    "break" => AudioData {
-        path: "audio/se/break.ogg",
-        volume_bias: 0.0,
-    },
-    "tada" => AudioData {
-        path: "audio/se/tada.ogg",
-        volume_bias: 0.0,
-    },
-    "focus" => AudioData {
-        path: "audio/se/focus.ogg",
+    "failure" => AudioData {
+        path: "audio/se/failure.ogg",
         volume_bias: 0.0,
     },
 };

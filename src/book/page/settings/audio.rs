@@ -50,9 +50,6 @@ impl PageBase for Page {
 }
 
 #[derive(Component)]
-struct InteractionDefaultFocus;
-
-#[derive(Component)]
 struct OnPage;
 
 fn page_enter(
@@ -114,7 +111,7 @@ fn page_enter(
                                     },
                                 },
                             );
-                            build_sep_title(parent, &asset_server, "SE", "waveform-fill");
+                            build_sep_title(parent, &asset_server, "SE", "waveform-bold");
                             element::build_element(
                                 parent,
                                 &asset_server,
@@ -240,7 +237,7 @@ fn handle_ui_navigation(
                             match action {
                                 ButtonAction::PlaySe => {
                                     app::audio::play_se(
-                                        "game_over",
+                                        "success",
                                         &mut commands,
                                         &asset_server,
                                         settings.as_ref(),

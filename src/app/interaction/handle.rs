@@ -59,7 +59,7 @@ pub fn handle_button_interaction(
         } else {
             draw_shoot_circle(&mut commands, target, Vec2::new(1.0, 1.0) * SHOOT_P * 2.5);
         }
-        audio::play_se("focus", &mut commands, &asset_server, settings.as_ref());
+        audio::play_se("draw", &mut commands, &asset_server, settings.as_ref());
     }
 }
 
@@ -93,7 +93,7 @@ pub fn handle_menu_entry_interaction(
             size: Vec2::new(target.size.y, target.size.y),
         };
         draw_shoot_circle(&mut commands, circle_target, Vec2::new(1.0, 1.0));
-        audio::play_se("focus", &mut commands, &asset_server, settings.as_ref());
+        audio::play_se("draw", &mut commands, &asset_server, settings.as_ref());
     }
 }
 
@@ -120,7 +120,7 @@ pub fn handle_switch_interaction(
     }
     if let Some(target) = target {
         draw_shoot_rect(&mut commands, target, Vec2::ZERO);
-        audio::play_se("focus", &mut commands, &asset_server, settings.as_ref());
+        audio::play_se("draw", &mut commands, &asset_server, settings.as_ref());
     }
 }
 
@@ -149,7 +149,7 @@ pub fn handle_slider_interaction(
     }
     if let Some(target) = target {
         draw_shoot_rect(&mut commands, target, Vec2::new(SLIDER_P, -SLIDER_P * 0.3));
-        audio::play_se("focus", &mut commands, &asset_server, settings.as_ref());
+        audio::play_se("draw", &mut commands, &asset_server, settings.as_ref());
     }
 }
 
@@ -180,7 +180,7 @@ pub fn handle_link_interaction(
             target,
             Vec2::new(ui::fs_x(0.3), ui::fs_x(0.3)),
         );
-        audio::play_se("focus", &mut commands, &asset_server, settings.as_ref());
+        audio::play_se("draw", &mut commands, &asset_server, settings.as_ref());
     }
 }
 
@@ -209,7 +209,7 @@ pub fn handle_cross_panel_interaction(
     }
     if let Some(target) = target {
         draw_shoot_rect(&mut commands, target, Vec2::ONE * CROSS_PANEL_P);
-        audio::play_se("focus", &mut commands, &asset_server, settings.as_ref());
+        audio::play_se("draw", &mut commands, &asset_server, settings.as_ref());
     }
 }
 

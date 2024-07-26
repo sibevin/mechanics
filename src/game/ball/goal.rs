@@ -64,12 +64,17 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
     if ball.state != BallState::Starting {
         return;
     }
-    if let Some(mut entity_commands) = commands.get_entity(ball.root_entity()) {
+    if let Some(mut entity_commands) = commands.get_entity(ball.bg_entity()) {
         entity_commands.despawn_descendants();
         entity_commands.with_children(|parent| {
+            let z_layer = if ball.property.movement_type == BallMovementType::FixedReversed {
+                0.0
+            } else {
+                1.0
+            };
             parent
                 .spawn(SpriteBundle {
-                    transform: Transform::from_xyz(0.0, 0.0, 0.1),
+                    transform: Transform::from_xyz(0.0, 0.0, z_layer),
                     ..default()
                 })
                 .with_children(|parent| {
@@ -84,7 +89,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: GeometryBuilder::build_as(&shape),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.001),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.001),
                                         ..default()
                                     },
                                     ..default()
@@ -100,7 +105,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: bg_builder.build(),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.001),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.001),
                                         ..default()
                                     },
                                     ..default()
@@ -118,7 +123,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: GeometryBuilder::build_as(&shape),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.0015),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.0015),
                                         ..default()
                                     },
                                     ..default()
@@ -141,7 +146,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                         ShapeBundle {
                             path: line_builder.build(),
                             spatial: SpatialBundle {
-                                transform: Transform::from_xyz(0.0, 0.0, 0.002),
+                                transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.002),
                                 ..default()
                             },
                             ..default()
@@ -161,7 +166,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: GeometryBuilder::build_as(&shape),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.003),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.003),
                                         ..default()
                                     },
                                     ..default()
@@ -184,7 +189,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: GeometryBuilder::build_as(&shape),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.003),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.003),
                                         ..default()
                                     },
                                     ..default()
@@ -201,7 +206,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: bg_builder.build(),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.0035),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.0035),
                                         ..default()
                                     },
                                     ..default()
@@ -221,7 +226,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: GeometryBuilder::build_as(&shape),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.003),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.003),
                                         ..default()
                                     },
                                     ..default()
@@ -242,7 +247,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                         ShapeBundle {
                             path: GeometryBuilder::build_as(&shape),
                             spatial: SpatialBundle {
-                                transform: Transform::from_xyz(0.0, 0.0, 0.005),
+                                transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.005),
                                 ..default()
                             },
                             ..default()
@@ -265,7 +270,7 @@ fn update_ending_anime(commands: &mut Commands, ball: &Ball) {
     if ball.state != BallState::Ending {
         return;
     }
-    if let Some(mut entity_commands) = commands.get_entity(ball.root_entity()) {
+    if let Some(mut entity_commands) = commands.get_entity(ball.bg_entity()) {
         entity_commands.despawn_descendants();
         entity_commands.with_children(|parent| {
             parent

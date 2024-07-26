@@ -3,6 +3,7 @@ use bevy::prelude::*;
 mod action;
 mod anime_end;
 mod ball;
+mod ball_interaction;
 mod field;
 mod leaderboard;
 mod phase;

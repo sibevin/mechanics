@@ -92,47 +92,47 @@ fn page_enter(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         parent,
                                         &asset_server,
                                         ButtonAction::Link(String::from(
-                                            "https://freesound.org/people/laya/sounds/76364/"
+                                            "https://freesound.org/people/JapanYoshiTheGamer/sounds/713517/"
                                         )),
-                                        "trance_lead - by laya",
+                                        "Perspire (Loop) - by JapanYoshiTheGamer",
                                         Some("globe-light"),
                                         "default",
                                         true
                                     );
-                                    build_sep_title(parent, &asset_server, "SE", "waveform-fill");
-                                    app::ui::build_link(
-                                        parent,
-                                        &asset_server,
-                                        ButtonAction::Link(String::from(
-                                            "https://pixabay.com/sound-effects/heavy-cineamtic-hit-166888/",
-                                        )),
-                                        "Heavy Cineamtic Hit - By LordSonny",
-                                        Some("globe-light"),
-                                        "default",
-                                        true
-                                    );
-                                    app::ui::build_link(
-                                        parent,
-                                        &asset_server,
-                                        ButtonAction::Link(String::from(
-                                            "https://pixabay.com/sound-effects/pick-92276/",
-                                        )),
-                                        "Pick - From Pixabay",
-                                        Some("globe-light"),
-                                        "default",
-                                        true,
-                                    );
-                                    app::ui::build_link(
-                                        parent,
-                                        &asset_server,
-                                        ButtonAction::Link(String::from(
-                                            "https://pixabay.com/sound-effects/item-pick-up-38258/"
-                                        )),
-                                        "Item Pick Up - From Pixabay",
-                                        Some("globe-light"),
-                                        "default",
-                                        true,
 
+                                    build_sep_title(parent, &asset_server, "SE", "waveform-bold");
+                                    app::ui::build_link(
+                                        parent,
+                                        &asset_server,
+                                        ButtonAction::Link(String::from(
+                                            "https://freesound.org/people/carlmartin/sounds/158936/"
+                                        )),
+                                        "Jembay Hit 8 Hi Rim - by carlmartin",
+                                        Some("globe-light"),
+                                        "default",
+                                        true
+                                    );
+                                    app::ui::build_link(
+                                        parent,
+                                        &asset_server,
+                                        ButtonAction::Link(String::from(
+                                            "https://freesound.org/people/Sadiquecat/sounds/707650/"
+                                        )),
+                                        "Paper and marker (not actually) - by Sadiquecat",
+                                        Some("globe-light"),
+                                        "default",
+                                        true
+                                    );
+                                    app::ui::build_link(
+                                        parent,
+                                        &asset_server,
+                                        ButtonAction::Link(String::from(
+                                            "https://freesound.org/people/el_boss/sounds/643563/",
+                                        )),
+                                        "Radial knob clicks turning dial - by el_boss",
+                                        Some("globe-light"),
+                                        "default",
+                                        true,
                                     );
                                     app::ui::build_link(
                                         parent,
@@ -140,7 +140,7 @@ fn page_enter(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         ButtonAction::Link(String::from(
                                             "https://pixabay.com/sound-effects/glass-shatter-3-100155/"
                                         )),
-                                        "Glass Shatter 3 - From Pixabay",
+                                        "Glass Shatter 3 - from Pixabay",
                                         Some("globe-light"),
                                         "default",
                                         true
@@ -149,9 +149,9 @@ fn page_enter(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         parent,
                                         &asset_server,
                                         ButtonAction::Link(String::from(
-                                            "https://pixabay.com/sound-effects/tada-military-3-183975/"
+                                            "https://freesound.org/people/Kenneth_Cooney/sounds/609336/"
                                         )),
-                                        "Tada Military 3 - By floraphonic",
+                                        "Completed - by Kenneth_Cooney",
                                         Some("globe-light"),
                                         "default",
                                         true

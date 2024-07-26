@@ -1,9 +1,13 @@
-use self::ball::{Ball, BallProperty};
+use self::{
+    ball::{Ball, BallProperty},
+    ball_interaction::{build_hit_map, HitAction},
+};
 use super::*;
 use crate::app::{
     anime_effect::{self, ANIME_EFFECT_DONE_EVENT},
-    key_binding, ui,
+    audio, key_binding, settings, ui,
 };
+use bevy_persistent::prelude::*;
 use bevy_tweening::{component_animator_system, TweenCompleted};
 use std::collections::HashSet;
 
@@ -61,6 +65,7 @@ fn state_enter(
                 radius: 24.0,
                 movement_type: BallMovementType::Movable,
             },
+            BallControlParams::default(),
         );
         Ball::create_sprite(
             BallType::Bomb,
@@ -72,6 +77,7 @@ fn state_enter(
                 radius: 24.0,
                 movement_type: BallMovementType::Movable,
             },
+            BallControlParams::default(),
         );
         Ball::create_sprite(
             BallType::Goal,
@@ -83,6 +89,7 @@ fn state_enter(
                 radius: 24.0,
                 movement_type: BallMovementType::Movable,
             },
+            BallControlParams::default(),
         );
         Ball::create_sprite(
             BallType::Bullet,
@@ -94,6 +101,7 @@ fn state_enter(
                 radius: 24.0,
                 movement_type: BallMovementType::Fixed,
             },
+            BallControlParams::default(),
         );
         Ball::create_sprite(
             BallType::Bomb,
@@ -105,6 +113,7 @@ fn state_enter(
                 radius: 24.0,
                 movement_type: BallMovementType::Fixed,
             },
+            BallControlParams::default(),
         );
         Ball::create_sprite(
             BallType::Goal,
@@ -116,6 +125,7 @@ fn state_enter(
                 radius: 24.0,
                 movement_type: BallMovementType::Fixed,
             },
+            BallControlParams::default(),
         );
         Ball::create_sprite(
             BallType::Bullet,
@@ -127,6 +137,7 @@ fn state_enter(
                 radius: 24.0,
                 movement_type: BallMovementType::FixedReversed,
             },
+            BallControlParams::default(),
         );
         Ball::create_sprite(
             BallType::Bomb,
@@ -138,6 +149,7 @@ fn state_enter(
                 radius: 24.0,
                 movement_type: BallMovementType::FixedReversed,
             },
+            BallControlParams::default(),
         );
         Ball::create_sprite(
             BallType::Goal,
@@ -149,6 +161,55 @@ fn state_enter(
                 radius: 24.0,
                 movement_type: BallMovementType::FixedReversed,
             },
+            BallControlParams::default(),
+        );
+        Ball::create_sprite(
+            BallType::Bullet,
+            parent,
+            {},
+            BallProperty {
+                pos: Vec2::new(-300.0, 0.0),
+                v: Vec2::new(0.0, 0.0),
+                radius: 200.0,
+                movement_type: BallMovementType::FixedReversed,
+            },
+            BallControlParams::default(),
+        );
+        Ball::create_sprite(
+            BallType::Bullet,
+            parent,
+            {},
+            BallProperty {
+                pos: Vec2::new(-300.0, 10.0),
+                v: Vec2::new(10.0, 0.0),
+                radius: 10.0,
+                movement_type: BallMovementType::Movable,
+            },
+            BallControlParams::default(),
+        );
+        Ball::create_sprite(
+            BallType::Bullet,
+            parent,
+            {},
+            BallProperty {
+                pos: Vec2::new(-300.0, 40.0),
+                v: Vec2::new(5.0, 0.0),
+                radius: 10.0,
+                movement_type: BallMovementType::Movable,
+            },
+            BallControlParams::default(),
+        );
+        Ball::create_sprite(
+            BallType::Bullet,
+            parent,
+            {},
+            BallProperty {
+                pos: Vec2::new(-300.0, 70.0),
+                v: Vec2::new(5.0, 0.0),
+                radius: 15.0,
+                movement_type: BallMovementType::Movable,
+            },
+            BallControlParams::default(),
         );
     });
 }
@@ -161,18 +222,39 @@ fn state_update(
 
     mut refresh_timer: ResMut<timer::GameRefreshTimer>,
     time: Res<Time>,
+    settings: Res<Persistent<settings::Settings>>,
+    asset_server: Res<AssetServer>,
 ) {
     if refresh_timer.0.tick(time.delta()).just_finished() {
-        for (_, mut ball, _) in ball_query.iter_mut() {
+        let hit_map = build_hit_map(&ball_query);
+        for (e, mut b, _) in ball_query.iter_mut() {
+            if let Some(action) = hit_map.get(&e) {
+                match action {
+                    HitAction::Move(pos_v) => {
+                        b.update_pos(pos_v.pos);
+                        b.update_v(pos_v.v);
+                        audio::play_se("hit", &mut commands, &asset_server, settings.as_ref());
+                    }
+                    HitAction::Success => {
+                        // success
+                    }
+                    HitAction::Failure => {
+                        // failure
+                    }
+                    _ => (),
+                }
+            }
+        }
+        for (_, mut ball, mut trans) in ball_query.iter_mut() {
             if ball.state == BallState::Created {
                 ball.trigger_starting(&mut commands);
                 continue;
             }
-            if ball.state == BallState::Running {
+            if ball.state == BallState::Running
+                && ball.property.movement_type == BallMovementType::Movable
+            {
                 ball.travel();
-                // TODO
-                // 1. Detect hit
-                // 2. Update position
+                trans.translation = ball.property.pos.extend(0.0);
             }
             ball.update_anime(&mut commands);
         }

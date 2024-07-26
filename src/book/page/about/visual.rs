@@ -87,6 +87,23 @@ fn page_enter(mut commands: Commands, asset_server: Res<AssetServer>) {
                                     ..default()
                                 })
                                 .with_children(|parent| {
+                                    build_sep_title(
+                                        parent,
+                                        &asset_server,
+                                        "Palette",
+                                        "squares-four-fill",
+                                    );
+                                    app::ui::build_link(
+                                        parent,
+                                        &asset_server,
+                                        ButtonAction::Link(String::from(
+                                            "https://lospec.com/palette-list/winter-wonderland",
+                                        )),
+                                        "Winter Wonderland Palette - by jimison3",
+                                        Some("globe-light"),
+                                        "main",
+                                        true,
+                                    );
                                     build_sep_title(parent, &asset_server, "Icon", "shapes-fill");
                                     app::ui::build_link(
                                         parent,

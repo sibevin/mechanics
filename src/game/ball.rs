@@ -1,11 +1,10 @@
+use crate::app::ui;
 use bevy::prelude::*;
 use bevy_prototype_lyon::path::PathBuilder;
 use bevy_tweening::lens::*;
 use bevy_tweening::Targetable;
 use circular_queue::CircularQueue;
 use std::fmt;
-
-use crate::app::ui;
 
 pub mod bomb;
 pub mod bullet;
@@ -14,7 +13,7 @@ pub mod goal;
 pub const STARTING_DONE_EVENT: u64 = 0;
 pub const ENDING_DONE_EVENT: u64 = 1;
 const TAILING_SIZE: usize = 5;
-const TAILING_WINDOW: u8 = 3;
+const TAILING_WINDOW: u8 = 0;
 const BALL_LINE_W: f32 = ui::FONT_SIZE / 12.0;
 const BALL_OUTER_W: f32 = BALL_LINE_W * 3.0;
 
@@ -62,16 +61,26 @@ pub struct BallAnimeParams {
     pub alpha: f32,
 }
 
+#[derive(Default)]
+pub struct BallControlParams {
+    pub x: Option<(f32, f32)>,
+    pub y: Option<(f32, f32)>,
+    pub force: Option<(f32, f32)>,
+    pub angle: Option<(f32, f32)>,
+}
+
 #[derive(Component)]
 pub struct Ball {
     pub state: BallState,
     pub property: BallProperty,
     pub anime_params: BallAnimeParams,
+    pub control_params: BallControlParams,
     ability: Box<dyn BallAbility + Send + Sync>,
     tailings: CircularQueue<Vec2>,
     tailing_counter: u8,
     root_entity: Entity,
-    canvas_entity: Entity,
+    bg_entity: Entity,
+    dyn_entity: Entity,
 }
 
 fn build_ability(ball_type: &BallType) -> Box<dyn BallAbility + Send + Sync> {
@@ -88,12 +97,19 @@ impl Ball {
         parent: &mut ChildBuilder,
         bundle: impl Bundle,
         property: BallProperty,
+        control_params: BallControlParams,
     ) {
         let ability = build_ability(&ball_type);
-        let mut canvas_entity: Entity = Entity::PLACEHOLDER;
-        let mut root_entity = parent.spawn((
+        let mut bg_entity: Entity = Entity::PLACEHOLDER;
+        let mut dyn_entity: Entity = Entity::PLACEHOLDER;
+        let z_layer = if property.movement_type == BallMovementType::FixedReversed {
+            0.0
+        } else {
+            1.0
+        };
+        let mut root_entity_command = parent.spawn((
             SpriteBundle {
-                transform: Transform::from_xyz(property.pos.x, property.pos.y, 0.0),
+                transform: Transform::from_xyz(property.pos.x, property.pos.y, z_layer),
                 sprite: Sprite {
                     color: ability.color(),
                     ..default()
@@ -102,10 +118,20 @@ impl Ball {
             },
             bundle,
         ));
-        root_entity.with_children(|parent| {
-            canvas_entity = parent
+        root_entity_command.with_children(|parent| {
+            bg_entity = parent
                 .spawn(SpriteBundle {
-                    transform: Transform::from_xyz(0.0, 0.0, 0.1),
+                    transform: Transform::from_xyz(0.0, 0.0, z_layer),
+                    sprite: Sprite {
+                        color: ability.color(),
+                        ..default()
+                    },
+                    ..default()
+                })
+                .id();
+            dyn_entity = parent
+                .spawn(SpriteBundle {
+                    transform: Transform::from_xyz(0.0, 0.0, z_layer),
                     sprite: Sprite {
                         color: ability.color(),
                         ..default()
@@ -114,14 +140,23 @@ impl Ball {
                 })
                 .id();
         });
-        let ball = Ball::new(ball_type, property, root_entity.id(), canvas_entity);
-        root_entity.insert(ball);
+        let ball = Ball::new(
+            ball_type,
+            property,
+            control_params,
+            root_entity_command.id(),
+            bg_entity,
+            dyn_entity,
+        );
+        root_entity_command.insert(ball);
     }
     pub fn new(
         ball_type: BallType,
         property: BallProperty,
+        control_params: BallControlParams,
         root_entity: Entity,
-        canvas_entity: Entity,
+        bg_entity: Entity,
+        dyn_entity: Entity,
     ) -> Self {
         Self {
             ability: build_ability(&ball_type),
@@ -130,11 +165,13 @@ impl Ball {
                 radius: 0.0,
                 alpha: 0.0,
             },
+            control_params,
             state: BallState::Created,
             tailings: CircularQueue::with_capacity(TAILING_SIZE),
             tailing_counter: 0,
             root_entity,
-            canvas_entity,
+            bg_entity,
+            dyn_entity,
         }
     }
     pub fn ball_type(&self) -> BallType {
@@ -150,8 +187,11 @@ impl Ball {
     pub fn root_entity(&self) -> Entity {
         self.root_entity
     }
-    pub fn canvas_entity(&self) -> Entity {
-        self.canvas_entity
+    pub fn bg_entity(&self) -> Entity {
+        self.bg_entity
+    }
+    pub fn dyn_entity(&self) -> Entity {
+        self.dyn_entity
     }
     pub fn travel(&mut self) -> Vec2 {
         if self.property.movement_type == BallMovementType::Movable {
@@ -163,8 +203,8 @@ impl Ball {
         self.property.pos = pos;
         self.record_tailing(self.property.pos);
     }
-    fn tailings(&self) -> Option<&CircularQueue<Vec2>> {
-        Some(&self.tailings)
+    fn tailings(&self) -> &CircularQueue<Vec2> {
+        &self.tailings
     }
     fn record_tailing(&mut self, pos: Vec2) {
         if self.tailing_counter == 0 {

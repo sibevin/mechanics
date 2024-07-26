@@ -16,5 +16,5 @@ pub use startup::startup;
 const VOLUME_RATIO: f32 = 0.01;
 
 fn to_volume(settings_value: u8, volume_bias: f32) -> f32 {
-    settings_value as f32 * VOLUME_RATIO + volume_bias
+    settings_value as f32 * VOLUME_RATIO * (1.0 + volume_bias)
 }

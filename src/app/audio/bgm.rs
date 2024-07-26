@@ -6,7 +6,7 @@ pub struct AudioBgm;
 pub type QueryAudioBgm<'w, 's> = Query<'w, 's, &'static AudioSink, With<AudioBgm>>;
 
 const BGM_PATH: &str = "audio/bgm/main.ogg";
-const BGM_VOLUME_BIAS: f32 = 0.0;
+const BGM_VOLUME_BIAS: f32 = -0.3;
 
 pub fn build_bgm(
     commands: &mut Commands,

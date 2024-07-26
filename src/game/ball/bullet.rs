@@ -11,7 +11,7 @@ impl BallAbility for Ability {
         BallType::Bullet
     }
     fn color(&self) -> Color {
-        theme::SECONDARY_COLOR
+        theme::FG_COLOR
     }
     fn setup_starting_anime(&self, commands: &mut Commands, ball: &Ball) {
         setup_starting_anime(commands, ball);
@@ -64,12 +64,17 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
     if ball.state != BallState::Starting {
         return;
     }
-    if let Some(mut entity_commands) = commands.get_entity(ball.root_entity()) {
+    if let Some(mut entity_commands) = commands.get_entity(ball.bg_entity()) {
         entity_commands.despawn_descendants();
         entity_commands.with_children(|parent| {
+            let z_layer = if ball.property.movement_type == BallMovementType::FixedReversed {
+                0.0
+            } else {
+                1.0
+            };
             parent
                 .spawn(SpriteBundle {
-                    transform: Transform::from_xyz(0.0, 0.0, 0.1),
+                    transform: Transform::from_xyz(0.0, 0.0, z_layer),
                     ..default()
                 })
                 .with_children(|parent| {
@@ -82,6 +87,10 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                             parent.spawn((
                                 ShapeBundle {
                                     path: GeometryBuilder::build_as(&shape),
+                                    spatial: SpatialBundle {
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.001),
+                                        ..default()
+                                    },
                                     ..default()
                                 },
                                 Fill::color(
@@ -94,7 +103,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: GeometryBuilder::build_as(&shape),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.001),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.001),
                                         ..default()
                                     },
                                     ..default()
@@ -109,7 +118,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: bg_builder.build(),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.002),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.002),
                                         ..default()
                                     },
                                     ..default()
@@ -127,7 +136,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: bg_builder.build(),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.001),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.001),
                                         ..default()
                                     },
                                     ..default()
@@ -141,7 +150,7 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 ShapeBundle {
                                     path: GeometryBuilder::build_as(&shape),
                                     spatial: SpatialBundle {
-                                        transform: Transform::from_xyz(0.0, 0.0, 0.002),
+                                        transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.002),
                                         ..default()
                                     },
                                     ..default()
@@ -159,9 +168,48 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
     }
 }
 
-fn update_running_anime(_commands: &mut Commands, ball: &Ball) {
-    if ball.state != BallState::Running {
+fn update_running_anime(commands: &mut Commands, ball: &Ball) {
+    if ball.state != BallState::Running || ball.property.movement_type != BallMovementType::Movable
+    {
         return;
+    }
+    if let Some(mut entity_commands) = commands.get_entity(ball.dyn_entity()) {
+        entity_commands.despawn_descendants();
+        entity_commands.with_children(|parent| {
+            let z_layer = if ball.property.movement_type == BallMovementType::FixedReversed {
+                0.0
+            } else {
+                1.0
+            };
+            parent
+                .spawn(SpriteBundle {
+                    transform: Transform::from_xyz(0.0, 0.0, z_layer),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    let shape = shapes::Circle {
+                        radius: ball.anime_params.radius,
+                        center: Vec2::new(0.0, 0.0),
+                    };
+                    for tailing in ball.tailings().iter() {
+                        parent.spawn((
+                            ShapeBundle {
+                                path: GeometryBuilder::build_as(&shape),
+                                spatial: SpatialBundle {
+                                    transform: Transform::from_xyz(
+                                        tailing.x - ball.property.pos.x,
+                                        tailing.y - ball.property.pos.y,
+                                        z_layer + 0.009,
+                                    ),
+                                    ..default()
+                                },
+                                ..default()
+                            },
+                            Fill::color(ball.ability.color().with_alpha(0.1)),
+                        ));
+                    }
+                });
+        });
     }
 }
 
@@ -169,7 +217,7 @@ fn update_ending_anime(commands: &mut Commands, ball: &Ball) {
     if ball.state != BallState::Ending {
         return;
     }
-    if let Some(mut entity_commands) = commands.get_entity(ball.root_entity()) {
+    if let Some(mut entity_commands) = commands.get_entity(ball.bg_entity()) {
         entity_commands.despawn_descendants();
         entity_commands.with_children(|parent| {
             parent
