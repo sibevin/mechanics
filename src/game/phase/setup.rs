@@ -34,6 +34,6 @@ fn state_update(
 ) {
     game_phase.set(PhaseState::Ready);
     // TODO: Test
-    book_page.set(PageState::Menu);
-    // book_page.set(PageState::Game);
+    // book_page.set(PageState::Menu);
+    book_page.set(PageState::Game);
 }

@@ -1,6 +1,6 @@
 use self::{
     ball::{Ball, BallProperty},
-    ball_interaction::{build_hit_map, HitAction},
+    ball_interaction::{build_hit_map, calcuate_v_after_hit, HitAction},
 };
 use super::*;
 use crate::app::{
@@ -49,168 +49,23 @@ fn state_enter(
     mut game_status: ResMut<GameStatus>,
     mut key_binding: ResMut<key_binding::KeyBindingConfig>,
 ) {
-    game_status.mode = StatusMode::Playing;
+    game_status.mode = StatusMode::Preparing;
     key_binding.mode = key_binding::KeyBindingMode::Gaming;
     let dyn_entity = dyn_query.get_single().unwrap();
     let mut entity_commands = commands.get_entity(dyn_entity).unwrap();
     entity_commands.despawn_descendants();
     entity_commands.with_children(|parent| {
-        Ball::create_sprite(
-            BallType::Bullet,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(0.0, 0.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 24.0,
-                movement_type: BallMovementType::Movable,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Bomb,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(100.0, 0.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 24.0,
-                movement_type: BallMovementType::Movable,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Goal,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(200.0, 0.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 24.0,
-                movement_type: BallMovementType::Movable,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Bullet,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(0.0, 100.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 24.0,
-                movement_type: BallMovementType::Fixed,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Bomb,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(100.0, 100.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 24.0,
-                movement_type: BallMovementType::Fixed,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Goal,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(200.0, 100.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 24.0,
-                movement_type: BallMovementType::Fixed,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Bullet,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(0.0, 200.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 24.0,
-                movement_type: BallMovementType::FixedReversed,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Bomb,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(100.0, 200.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 24.0,
-                movement_type: BallMovementType::FixedReversed,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Goal,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(200.0, 200.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 24.0,
-                movement_type: BallMovementType::FixedReversed,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Bullet,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(-300.0, 0.0),
-                v: Vec2::new(0.0, 0.0),
-                radius: 200.0,
-                movement_type: BallMovementType::FixedReversed,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Bullet,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(-300.0, 10.0),
-                v: Vec2::new(10.0, 0.0),
-                radius: 10.0,
-                movement_type: BallMovementType::Movable,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Bullet,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(-300.0, 40.0),
-                v: Vec2::new(5.0, 0.0),
-                radius: 10.0,
-                movement_type: BallMovementType::Movable,
-            },
-            BallControlParams::default(),
-        );
-        Ball::create_sprite(
-            BallType::Bullet,
-            parent,
-            {},
-            BallProperty {
-                pos: Vec2::new(-300.0, 70.0),
-                v: Vec2::new(5.0, 0.0),
-                radius: 15.0,
-                movement_type: BallMovementType::Movable,
-            },
-            BallControlParams::default(),
-        );
+        let ball_configs = level_builder::LEVEL_MAP.get("hit_test").unwrap();
+        // let ball_configs = level_builder::LEVEL_MAP.get("simple").unwrap();
+        for ball_config in ball_configs.balls.iter() {
+            Ball::create_sprite(
+                ball_config.ball_type.clone(),
+                parent,
+                {},
+                ball_config.property.clone(),
+                ball_config.control_params.clone(),
+            );
+        }
     });
 }
 
@@ -224,44 +79,89 @@ fn state_update(
     time: Res<Time>,
     settings: Res<Persistent<settings::Settings>>,
     asset_server: Res<AssetServer>,
+    mut ball_tick: Local<u8>,
 ) {
     if refresh_timer.0.tick(time.delta()).just_finished() {
-        let hit_map = build_hit_map(&ball_query);
-        for (e, mut b, _) in ball_query.iter_mut() {
-            if let Some(action) = hit_map.get(&e) {
-                match action {
-                    HitAction::Move(pos_v) => {
-                        b.update_pos(pos_v.pos);
-                        b.update_v(pos_v.v);
-                        audio::play_se("hit", &mut commands, &asset_server, settings.as_ref());
+        if *ball_tick == 0 {
+            let hit_map = build_hit_map(&ball_query);
+            // NOTE: Detect success and failure first
+            for (e, _, _) in ball_query.iter_mut() {
+                if let Some(actions) = hit_map.get(&e) {
+                    for action in actions.iter() {
+                        match action {
+                            HitAction::Success => {
+                                // success
+                            }
+                            HitAction::Failure => {
+                                // failure
+                            }
+                            _ => (),
+                        }
                     }
-                    HitAction::Success => {
-                        // success
-                    }
-                    HitAction::Failure => {
-                        // failure
-                    }
-                    _ => (),
                 }
             }
+            // NOTE: Handle ball hit
+            for (e, mut b, _) in ball_query.iter_mut() {
+                let mut is_hit: bool = false;
+                let mut is_no_hit_detected: bool = true;
+                let mut bp = b.property.clone();
+                if let Some(actions) = hit_map.get(&e) {
+                    for action in actions.iter() {
+                        match action {
+                            HitAction::Move(info) => {
+                                dbg!("move");
+                                if b.check_hit_window(info.opponent_entity) {
+                                    dbg!("in_window");
+                                    let new_v = calcuate_v_after_hit(
+                                        &info.hit_type,
+                                        &bp,
+                                        &info.opponent_property,
+                                    );
+                                    dbg!(new_v);
+                                    bp.pos = bp.pos + new_v;
+                                    bp.v = new_v;
+                                    b.store_hit_entity(info.opponent_entity);
+                                    is_hit = true
+                                }
+                                is_no_hit_detected = false;
+                            }
+                            _ => (),
+                        }
+                    }
+                }
+                if is_hit && b.property.movement_type == BallMovementType::Movable {
+                    dbg!("hit");
+                    b.update_pos(bp.pos);
+                    b.update_v(bp.v);
+                    dbg!(bp);
+                    audio::play_se("hit", &mut commands, &asset_server, settings.as_ref());
+                }
+                if is_no_hit_detected {
+                    b.clear_hit_counter();
+                }
+            }
+            for (_, mut ball, mut trans) in ball_query.iter_mut() {
+                if ball.state == BallState::Running
+                    && ball.property.movement_type == BallMovementType::Movable
+                {
+                    ball.travel();
+                    trans.translation = ball.property.pos.extend(0.0);
+                }
+            }
+            *ball_tick = 1;
+        } else {
+            *ball_tick -= 1;
         }
-        for (_, mut ball, mut trans) in ball_query.iter_mut() {
+        for (_, mut ball, _) in ball_query.iter_mut() {
             if ball.state == BallState::Created {
                 ball.trigger_starting(&mut commands);
                 continue;
-            }
-            if ball.state == BallState::Running
-                && ball.property.movement_type == BallMovementType::Movable
-            {
-                ball.travel();
-                trans.translation = ball.property.pos.extend(0.0);
             }
             ball.update_anime(&mut commands);
         }
         for (_, mut ae) in ae_query.iter_mut() {
             anime_effect::update_anime_effect(&mut commands, &mut ae);
         }
-
         let mut entities_to_despawn: HashSet<Entity> = HashSet::new();
         for tween_event in tween_completed_events.read() {
             if tween_event.user_data == STARTING_DONE_EVENT {

@@ -11,6 +11,7 @@ pub enum PageState {
     Loading,
     Menu,
     Game,
+    Level,
     SettingsAudio,
     SettingsDisplay,
     SettingsControl,
@@ -22,10 +23,11 @@ pub enum PageState {
     Leaderboard,
 }
 
-pub const PAGES: [&dyn page::PageBase; 12] = [
+pub const PAGES: [&dyn page::PageBase; 13] = [
     &page::loading::Page,
     &page::menu::Page,
     &page::game::Page,
+    &page::level::Page,
     &page::settings::audio::Page,
     &page::settings::display::Page,
     &page::settings::control::Page,

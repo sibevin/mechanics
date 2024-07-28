@@ -8,6 +8,7 @@ pub mod dev;
 pub mod game;
 pub mod help;
 pub mod leaderboard;
+pub mod level;
 pub mod loading;
 pub mod menu;
 pub mod settings;

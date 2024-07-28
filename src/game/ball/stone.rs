@@ -8,7 +8,7 @@ pub struct Ability;
 
 impl BallAbility for Ability {
     fn ball_type(&self) -> BallType {
-        BallType::Bullet
+        BallType::Stone
     }
     fn color(&self) -> Color {
         theme::FG_COLOR
@@ -30,7 +30,7 @@ fn setup_starting_anime(commands: &mut Commands, ball: &Ball) {
     if let Some(mut entity_commands) = commands.get_entity(ball.root_entity()) {
         let tween = Tween::new(
             EaseFunction::QuadraticIn,
-            Duration::from_millis(800),
+            Duration::from_millis(BALL_START_ANIME_L),
             BallAnimeLens {
                 start_radius: ball.property.radius * 2.5,
                 start_color_alpha: 0.0,
@@ -47,7 +47,7 @@ fn setup_ending_anime(commands: &mut Commands, ball: &Ball) {
     if let Some(mut entity_commands) = commands.get_entity(ball.root_entity()) {
         let tween = Tween::new(
             EaseFunction::QuadraticIn,
-            Duration::from_millis(500),
+            Duration::from_millis(BALL_END_ANIME_L),
             BallAnimeLens {
                 start_radius: ball.property.radius,
                 start_color_alpha: 0.3,
@@ -141,10 +141,12 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                     },
                                     ..default()
                                 },
-                                Stroke::new(
-                                    ball.ability.color().with_alpha(ball.anime_params.alpha),
-                                    BALL_LINE_W,
-                                ),
+                                Stroke {
+                                    color: ball.ability.color().with_alpha(ball.anime_params.alpha),
+                                    options: StrokeOptions::DEFAULT
+                                        .with_line_width(BALL_LINE_W)
+                                        .with_line_cap(LineCap::Round),
+                                },
                             ));
                             parent.spawn((
                                 ShapeBundle {
@@ -187,26 +189,32 @@ fn update_running_anime(commands: &mut Commands, ball: &Ball) {
                     ..default()
                 })
                 .with_children(|parent| {
-                    let shape = shapes::Circle {
-                        radius: ball.anime_params.radius,
-                        center: Vec2::new(0.0, 0.0),
-                    };
+                    let mut last_pos = Vec2::ZERO;
                     for tailing in ball.tailings().iter() {
+                        let mut line_builder = PathBuilder::new();
+                        line_builder.move_to(last_pos);
+                        line_builder.line_to(Vec2::new(
+                            tailing.x - ball.property.pos.x,
+                            tailing.y - ball.property.pos.y,
+                        ));
                         parent.spawn((
                             ShapeBundle {
-                                path: GeometryBuilder::build_as(&shape),
+                                path: line_builder.build(),
                                 spatial: SpatialBundle {
-                                    transform: Transform::from_xyz(
-                                        tailing.x - ball.property.pos.x,
-                                        tailing.y - ball.property.pos.y,
-                                        z_layer + 0.009,
-                                    ),
+                                    transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.0009),
                                     ..default()
                                 },
                                 ..default()
                             },
-                            Fill::color(ball.ability.color().with_alpha(0.1)),
+                            Stroke {
+                                color: ball.ability.color().with_alpha(0.05),
+                                // color: ball.ability.color().mix(&theme::BG_COLOR, 0.9),
+                                options: StrokeOptions::DEFAULT
+                                    .with_line_width(ball.property.radius * 2.0)
+                                    .with_line_cap(LineCap::Round),
+                            },
                         ));
+                        last_pos = *tailing - ball.property.pos;
                     }
                 });
         });

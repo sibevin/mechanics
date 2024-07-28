@@ -30,7 +30,7 @@ fn setup_starting_anime(commands: &mut Commands, ball: &Ball) {
     if let Some(mut entity_commands) = commands.get_entity(ball.root_entity()) {
         let tween = Tween::new(
             EaseFunction::QuadraticIn,
-            Duration::from_millis(800),
+            Duration::from_millis(BALL_START_ANIME_L),
             BallAnimeLens {
                 start_radius: ball.property.radius * 2.5,
                 start_color_alpha: 0.0,
@@ -47,7 +47,7 @@ fn setup_ending_anime(commands: &mut Commands, ball: &Ball) {
     if let Some(mut entity_commands) = commands.get_entity(ball.root_entity()) {
         let tween = Tween::new(
             EaseFunction::QuadraticIn,
-            Duration::from_millis(500),
+            Duration::from_millis(BALL_END_ANIME_L),
             BallAnimeLens {
                 start_radius: ball.property.radius,
                 start_color_alpha: 0.3,
@@ -110,10 +110,12 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                     },
                                     ..default()
                                 },
-                                Stroke::new(
-                                    ball.ability.color().with_alpha(ball.anime_params.alpha),
-                                    BALL_LINE_W,
-                                ),
+                                Stroke {
+                                    color: ball.ability.color().with_alpha(ball.anime_params.alpha),
+                                    options: StrokeOptions::DEFAULT
+                                        .with_line_width(BALL_LINE_W)
+                                        .with_line_cap(LineCap::Round),
+                                },
                             ));
                             let shape = shapes::Circle {
                                 radius: ball.anime_params.radius + BALL_OUTER_W,

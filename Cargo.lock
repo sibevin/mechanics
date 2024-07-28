@@ -2809,6 +2809,7 @@ dependencies = [
  "chrono",
  "circular-queue",
  "dirs",
+ "lazy_static",
  "phf",
  "rand",
  "serde",

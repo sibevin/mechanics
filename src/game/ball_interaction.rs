@@ -1,21 +1,22 @@
 use super::ball::*;
 use bevy::prelude::*;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
-#[derive(Debug, Default, Copy, Clone)]
-pub struct PosV {
-    pub pos: Vec2,
-    pub v: Vec2,
+
+#[derive(Clone)]
+pub struct HitMoveInfo {
+    pub hit_type: HitType,
+    pub opponent_entity: Entity,
+    pub opponent_property: BallProperty,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Clone)]
 pub enum HitAction {
-    None,
-    Move(PosV),
+    Move(HitMoveInfo),
     Success,
     Failure,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum HitType {
     None,
     Outside,
@@ -26,12 +27,12 @@ type EntityBall<'a> = (Rc<RefCell<Entity>>, Rc<RefCell<&'a Ball>>);
 
 pub fn build_hit_map(
     ball_query: &Query<(Entity, &mut Ball, &mut Transform), With<Ball>>,
-) -> HashMap<Entity, HitAction> {
+) -> HashMap<Entity, Vec<HitAction>> {
     let mut balls: Vec<EntityBall> = Vec::new();
     for (e, b, _) in ball_query.iter() {
         balls.push((Rc::new(RefCell::new(e)), Rc::new(RefCell::new(b))));
     }
-    let mut hit_map: HashMap<Entity, HitAction> = HashMap::new();
+    let mut hit_map: HashMap<Entity, Vec<HitAction>> = HashMap::new();
     for (i, (e1, b1)) in balls.iter().enumerate() {
         if b1.borrow().state != BallState::Running {
             continue;
@@ -63,21 +64,23 @@ pub fn detect_hit(b1: &Ball, b2: &Ball) -> HitType {
     let pos2 = b2.property.pos;
     let r1 = b1.property.radius;
     let r2 = b2.property.radius;
-    if pos1.distance(pos2) > r1 + r2 {
-        return HitType::None;
+    if b1.property.movement_type != BallMovementType::FixedReversed
+        && b2.property.movement_type != BallMovementType::FixedReversed
+    {
+        if pos1.distance(pos2) > r1 + r2 {
+            return HitType::None;
+        } else {
+            return HitType::Outside;
+        }
     }
     if r1 >= r2 {
-        if pos1.distance(pos2) > r1 {
-            return HitType::Outside;
-        } else if pos1.distance(pos2) > r1 - r2 {
+        if pos1.distance(pos2) > r1 - r2 {
             return HitType::Inside;
         } else {
             return HitType::None;
         }
     } else {
-        if pos1.distance(pos2) > r2 {
-            return HitType::Outside;
-        } else if pos1.distance(pos2) > r2 - r1 {
+        if pos1.distance(pos2) > r2 - r1 {
             return HitType::Inside;
         } else {
             return HitType::None;
@@ -86,86 +89,119 @@ pub fn detect_hit(b1: &Ball, b2: &Ball) -> HitType {
 }
 
 fn record_hit_action(
-    hit_map: &mut HashMap<Entity, HitAction>,
+    hit_map: &mut HashMap<Entity, Vec<HitAction>>,
     hit_type: HitType,
     e1: Entity,
     b1: &Ball,
     e2: Entity,
     b2: &Ball,
 ) {
-    let mut e1_action: HitAction = hit_map.get(&e1).copied().unwrap_or(HitAction::None);
-    let mut e2_action: HitAction = hit_map.get(&e2).copied().unwrap_or(HitAction::None);
+    let mut hit_status: &str = "none";
+    let e1_action: HitAction;
+    let e2_action: HitAction;
     match b1.ball_type() {
-        BallType::Bullet => match b2.ball_type() {
-            BallType::Bullet => {
-                let pos_vs = calculate_pos_v_after_hitting(&hit_type, b1, b2);
-                e1_action = HitAction::Move(pos_vs.0);
-                e2_action = HitAction::Move(pos_vs.1);
+        BallType::Stone => match b2.ball_type() {
+            BallType::Stone => {
+                hit_status = "hit";
             }
             BallType::Goal => {
-                e1_action = HitAction::Success;
-                e2_action = HitAction::Success;
+                hit_status = "success";
             }
             BallType::Bomb => {
-                e1_action = HitAction::Failure;
-                e2_action = HitAction::Failure;
+                hit_status = "failure";
             }
         },
         BallType::Goal => match b2.ball_type() {
             BallType::Goal => {
-                let pos_vs = calculate_pos_v_after_hitting(&hit_type, b1, b2);
-                e1_action = HitAction::Move(pos_vs.0);
-                e2_action = HitAction::Move(pos_vs.1);
+                hit_status = "hit";
             }
             BallType::Bomb => {
-                let pos_vs = calculate_pos_v_after_hitting(&hit_type, b1, b2);
-                e1_action = HitAction::Move(pos_vs.0);
-                e2_action = HitAction::Move(pos_vs.1);
+                hit_status = "hit";
             }
             _ => (),
         },
         BallType::Bomb => match b2.ball_type() {
             BallType::Bomb => {
-                let pos_vs = calculate_pos_v_after_hitting(&hit_type, b1, b2);
-                e1_action = HitAction::Move(pos_vs.0);
-                e2_action = HitAction::Move(pos_vs.1);
+                hit_status = "hit";
             }
             _ => (),
         },
     }
-    hit_map.insert(e1, e1_action);
-    hit_map.insert(e2, e2_action);
-}
-
-fn calculate_pos_v_after_hitting(hit_type: &HitType, b1: &Ball, b2: &Ball) -> (PosV, PosV) {
-    let mut pv1_new = PosV::default();
-    let mut pv2_new = PosV::default();
-    let v1_new = calcuate_v_after_hitting(b1, b2, hit_type);
-    pv1_new.v = v1_new;
-    pv1_new.pos = b1.property.pos + v1_new;
-    let v2_new = calcuate_v_after_hitting(b2, b1, hit_type);
-    pv2_new.v = v2_new;
-    pv2_new.pos = b2.property.pos + v2_new;
-    (pv1_new, pv2_new)
-}
-
-fn calcuate_v_after_hitting(b1: &Ball, b2: &Ball, hit_type: &HitType) -> Vec2 {
-    let v1 = b1.property.v;
-    if v1.length() == 0.0 {
-        return v1;
+    match hit_status {
+        "hit" => {
+            e1_action = HitAction::Move(HitMoveInfo {
+                hit_type: hit_type.clone(),
+                opponent_entity: e2,
+                opponent_property: b2.property.clone(),
+            });
+            e2_action = HitAction::Move(HitMoveInfo {
+                hit_type: hit_type.clone(),
+                opponent_entity: e1,
+                opponent_property: b1.property.clone(),
+            });
+        }
+        "success" => {
+            e1_action = HitAction::Success;
+            e2_action = HitAction::Success;
+        }
+        "failure" => {
+            e1_action = HitAction::Failure;
+            e2_action = HitAction::Failure;
+        }
+        _ => return,
     }
-    let v2 = b2.property.v;
+    if let Some(actions) = hit_map.get_mut(&e1) {
+        actions.push(e1_action);
+    } else {
+        hit_map.insert(e1, vec![e1_action]);
+    }
+    if let Some(actions) = hit_map.get_mut(&e2) {
+        actions.push(e2_action);
+    } else {
+        hit_map.insert(e2, vec![e2_action]);
+    }
+}
+
+pub fn calcuate_v_after_hit(hit_type: &HitType, bp1: &BallProperty, bp2: &BallProperty) -> Vec2 {
+    let v1 = bp1.v;
+    let v2 = bp2.v;
+    let m1 = bp1.radius.powi(2);
+    let m2 = bp2.radius.powi(2);
     let vp = if *hit_type == HitType::Outside {
-        b2.property.pos - b1.property.pos
+        bp1.pos - bp2.pos
     } else {
-        b1.property.pos - b2.property.pos
+        bp2.pos - bp1.pos
     };
-    let dv = (v1.project_onto(vp.normalize().perp()) * 2.0 - v1).normalize();
-    if v2.length() == 0.0 {
-        dv * v1.length()
+    if bp2.movement_type == BallMovementType::Movable {
+        v1 - 2.0 * m2 / (m1 + m2) * (v1 - v2).dot(vp) / vp.length().powi(2) * vp
     } else {
-        let m1 = b1.property.radius * b1.property.radius;
-        let m2 = b2.property.radius * b2.property.radius;
-        dv * ((m1 - m2) * v1.length() + 2.0 * m2 * v2.length()) / (m1 + m2)
+        if bp2.movement_type == BallMovementType::FixedReversed && v1.dot(vp) > 0.0 {
+            // NOTE: If v1 is toward center, keep v1 not change to make sure ball will not move
+            // outside
+            v1
+        } else {
+            v1 - 2.0 * v1.dot(vp) / vp.length().powi(2) * vp
+        }
     }
 }
+
+// pub fn calcuate_v_after_hit(hit_type: &HitType, bp1: &BallProperty, bp2: &BallProperty) -> Vec2 {
+//     let v1 = bp1.v;
+//     if v1.length() == 0.0 {
+//         return v1;
+//     }
+//     let v2 = bp2.v;
+//     let vp = if *hit_type == HitType::Outside {
+//         bp2.pos - bp1.pos
+//     } else {
+//         bp1.pos - bp2.pos
+//     };
+//     let dv = (v1.project_onto(vp.normalize().perp()) * 2.0 - v1).normalize();
+//     if v2.length() == 0.0 {
+//         dv * v1.length()
+//     } else {
+//         let m1 = bp1.radius * bp1.radius;
+//         let m2 = bp2.radius * bp2.radius;
+//         dv * ((m1 - m2) * v1.length() + 2.0 * m2 * v2.length()) / (m1 + m2)
+//     }
+// }

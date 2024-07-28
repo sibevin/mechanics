@@ -1,127 +1,74 @@
-use super::record::LeaderboardRecord;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-#[cfg(not(target_arch = "wasm32"))]
-use crate::app;
+pub const MAX_HISTORIES_PER_LEVEL: usize = 9;
 
-pub const MAX_PLAYER_NAME_LENGTH: usize = 12;
-pub const MAX_RECORDS_PER_LIST: usize = 9;
-pub const LEADERBOARD_LISTS: [&str; 5] = [
-    "score",
-    "time",
-    "max_alpha_count",
-    "max_control_chain",
-    "max_hyper_chain",
-];
+#[derive(Resource, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct LevelHistory {
+    pub is_clear: bool,
+    pub time: u32,
+    pub x: Vec<f32>,
+    pub y: Vec<f32>,
+    pub force: Vec<f32>,
+    pub angle: Vec<f32>,
+    pub created_at: String,
+}
+
+#[derive(Resource, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct LevelRecord {
+    pub is_clear: bool,
+    pub best_history: Option<LevelHistory>,
+    pub histories: Vec<LevelHistory>,
+}
 
 #[derive(Resource, Serialize, Deserialize)]
 pub struct LeaderboardModel {
-    pub records: Vec<LeaderboardRecord>,
+    pub level_map: HashMap<String, LevelRecord>,
 }
 
 impl LeaderboardModel {
-    pub fn store(&mut self, record: LeaderboardRecord) {
-        use std::cmp::Reverse;
-        #[cfg(not(target_arch = "wasm32"))]
-        app::screenshot::store_leaderboard_screenshots(record.uid());
-        self.records.push(record);
-        self.records.sort_by_key(|record| {
-            (
-                Reverse(record.score),
-                Reverse(record.time),
-                Reverse(record.max_alpha_count),
-                Reverse(record.max_control_chain),
-                Reverse(record.max_hyper_chain),
-            )
-        });
-        if self.records.len() > MAX_RECORDS_PER_LIST * 5 {
-            self.records.pop();
+    pub fn open_level(&mut self, level_code: String) {
+        if self.level_map.get(&level_code).is_none() {
+            self.level_map.insert(
+                level_code,
+                LevelRecord {
+                    is_clear: false,
+                    best_history: None,
+                    histories: vec![],
+                },
+            );
         }
     }
-
-    pub fn fetch_records(&self, field: &str) -> Vec<LeaderboardRecord> {
-        use std::cmp::Reverse;
-        let mut records = self.records.clone();
-        records.sort_by_key(|record| match field {
-            "time" => (Reverse(record.time), Reverse(record.score)),
-            "score" => (Reverse(record.score), Reverse(record.time)),
-            "max_alpha_count" => (Reverse(record.max_alpha_count), Reverse(record.score)),
-            "max_control_chain" => (Reverse(record.max_control_chain), Reverse(record.score)),
-            "max_hyper_chain" => (Reverse(record.max_hyper_chain), Reverse(record.score)),
-            _ => panic!("Invalid record field"),
-        });
-        records.into_iter().take(MAX_RECORDS_PER_LIST).collect()
-    }
-
-    pub fn rank(&self, field: &str, value: u32) -> u8 {
-        let records = self.fetch_records(field);
-        if records.is_empty() {
-            return 1;
-        }
-        let mut list_rank = 1;
-        let mut prev_value: u32 = 0;
-        for i in 0..MAX_RECORDS_PER_LIST {
-            if let Some(record) = records.get(i) {
-                let list_value = record.fetch(field);
-                if i == 0 {
-                    list_rank = 1;
-                    prev_value = list_value;
-                } else if list_value < prev_value {
-                    list_rank = i + 1;
-                    prev_value = list_value;
-                }
-                if value >= list_value {
-                    return list_rank as u8;
-                }
+    pub fn store_level_history(&mut self, level_code: String, history: LevelHistory) {
+        if let Some(record) = self.level_map.get_mut(&level_code) {
+            record.histories.push(history.clone());
+            if record.histories.len() > MAX_HISTORIES_PER_LEVEL {
+                record.histories.pop();
             }
-        }
-        0
-    }
-
-    pub fn target(&self, field: &str, value: u32) -> (u8, u32, u32) {
-        let records = self.fetch_records(field);
-        if records.is_empty() {
-            return (0, 0, 0);
-        }
-        let mut list_rank = 0;
-        let mut prev_value: u32 = 0;
-        for i in 0..MAX_RECORDS_PER_LIST {
-            if let Some(record) = records.get(i) {
-                let list_value = record.fetch(field);
-                if i == 0 {
-                    if value >= list_value {
-                        return (0, 0, 0);
+            if history.is_clear {
+                if let Some(best_history) = &record.best_history {
+                    if best_history.time > history.time {
+                        record.best_history = Some(history);
                     }
-                    list_rank = 1;
-                    prev_value = list_value;
-                } else if list_value < prev_value {
-                    if value >= list_value {
-                        return (list_rank as u8, prev_value, list_value);
-                    }
-                    list_rank = i + 1;
-                    prev_value = list_value;
+                } else {
+                    record.best_history = Some(history);
+                }
+                if !record.is_clear {
+                    record.is_clear = true;
                 }
             }
         }
-        (list_rank as u8, prev_value, 0)
     }
-
-    pub fn is_new_in_list(&self, field: &str, value: u32) -> bool {
-        let records = self.fetch_records(field);
-        if records.len() < MAX_RECORDS_PER_LIST {
-            return true;
-        }
-        let last_value = records[MAX_RECORDS_PER_LIST - 1].fetch(field);
-        last_value < value
-    }
-
-    pub fn is_new_record(&self, record: &LeaderboardRecord) -> bool {
-        for field in LEADERBOARD_LISTS {
-            if self.is_new_in_list(field, record.fetch(field)) {
-                return true;
+    pub fn level_info(&self, level_code: String) -> LevelRecord {
+        if let Some(record) = self.level_map.get(&level_code) {
+            record.clone()
+        } else {
+            LevelRecord {
+                is_clear: false,
+                best_history: None,
+                histories: vec![],
             }
         }
-        false
     }
 }

@@ -14,6 +14,7 @@ bevy_tweening = "0.11.0"
 chrono = "0.4.38"
 circular-queue = "0.2.6"
 dirs = "5.0.1"
+lazy_static = "1.5.0"
 phf = { version = "0.11.2", features = ["macros"] }
 rand = "0.8.5"
 serde = { version = "1.0.204", features = ["derive"] }

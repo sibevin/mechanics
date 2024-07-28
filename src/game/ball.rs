@@ -1,5 +1,6 @@
 use crate::app::ui;
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use bevy_prototype_lyon::path::PathBuilder;
 use bevy_tweening::lens::*;
 use bevy_tweening::Targetable;
@@ -7,8 +8,8 @@ use circular_queue::CircularQueue;
 use std::fmt;
 
 pub mod bomb;
-pub mod bullet;
 pub mod goal;
+pub mod stone;
 
 pub const STARTING_DONE_EVENT: u64 = 0;
 pub const ENDING_DONE_EVENT: u64 = 1;
@@ -16,10 +17,13 @@ const TAILING_SIZE: usize = 5;
 const TAILING_WINDOW: u8 = 0;
 const BALL_LINE_W: f32 = ui::FONT_SIZE / 12.0;
 const BALL_OUTER_W: f32 = BALL_LINE_W * 3.0;
+const BALL_START_ANIME_L: u64 = 300;
+const BALL_END_ANIME_L: u64 = 300;
+const HIT_WINDOW: u8 = 5;
 
-#[derive(Component, Debug, PartialEq)]
+#[derive(Component, Debug, PartialEq, Clone)]
 pub enum BallType {
-    Bullet,
+    Stone,
     Goal,
     Bomb,
 }
@@ -34,7 +38,7 @@ pub enum BallState {
     Dead,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BallMovementType {
     Movable,
     Fixed,
@@ -49,6 +53,7 @@ pub trait BallAbility {
     fn update_anime(&self, _commands: &mut Commands, _ball: &Ball) {}
 }
 
+#[derive(Debug, Clone)]
 pub struct BallProperty {
     pub radius: f32,
     pub pos: Vec2,
@@ -61,7 +66,7 @@ pub struct BallAnimeParams {
     pub alpha: f32,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct BallControlParams {
     pub x: Option<(f32, f32)>,
     pub y: Option<(f32, f32)>,
@@ -75,6 +80,7 @@ pub struct Ball {
     pub property: BallProperty,
     pub anime_params: BallAnimeParams,
     pub control_params: BallControlParams,
+    hit_entity_counter: HashMap<Entity, u8>,
     ability: Box<dyn BallAbility + Send + Sync>,
     tailings: CircularQueue<Vec2>,
     tailing_counter: u8,
@@ -85,7 +91,7 @@ pub struct Ball {
 
 fn build_ability(ball_type: &BallType) -> Box<dyn BallAbility + Send + Sync> {
     match ball_type {
-        BallType::Bullet => Box::new(bullet::Ability),
+        BallType::Stone => Box::new(stone::Ability),
         BallType::Goal => Box::new(goal::Ability),
         BallType::Bomb => Box::new(bomb::Ability),
     }
@@ -166,6 +172,7 @@ impl Ball {
                 alpha: 0.0,
             },
             control_params,
+            hit_entity_counter: HashMap::new(),
             state: BallState::Created,
             tailings: CircularQueue::with_capacity(TAILING_SIZE),
             tailing_counter: 0,
@@ -180,6 +187,27 @@ impl Ball {
     pub fn update_pos(&mut self, pos: Vec2) {
         self.property.pos = pos;
         self.record_tailing(self.property.pos);
+    }
+    pub fn store_hit_entity(&mut self, e: Entity) {
+        self.hit_entity_counter.insert(e, HIT_WINDOW);
+    }
+    pub fn check_hit_window(&mut self, e: Entity) -> bool {
+        if let Some(count) = self.hit_entity_counter.get_mut(&e) {
+            let count_value = *count;
+            dbg!(count_value);
+            if count_value > 0 {
+                self.hit_entity_counter.insert(e, count_value - 1);
+                return false;
+            } else {
+                self.hit_entity_counter.remove(&e);
+                return true;
+            }
+        } else {
+            return true;
+        }
+    }
+    pub fn clear_hit_counter(&mut self) {
+        self.hit_entity_counter.clear();
     }
     pub fn update_v(&mut self, v: Vec2) {
         self.property.v = v;

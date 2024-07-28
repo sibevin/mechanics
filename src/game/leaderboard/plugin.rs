@@ -1,8 +1,8 @@
-use super::model::LeaderboardModel;
-use super::record::LeaderboardRecord;
+use super::model::{LeaderboardModel, LevelHistory};
 use crate::app;
 use bevy::prelude::*;
 use bevy_persistent::prelude::*;
+use std::collections::HashMap;
 use std::path::Path;
 
 pub struct LeaderboardPlugin;
@@ -17,10 +17,12 @@ impl Plugin for LeaderboardPlugin {
                 .name("leaderboard")
                 .format(StorageFormat::Bincode)
                 .path(config_dir.join("leaderboard.bin"))
-                .default(LeaderboardModel { records: vec![] })
+                .default(LeaderboardModel {
+                    level_map: HashMap::new(),
+                })
                 .build()
                 .expect("failed to initialize variables"),
         );
-        app.insert_resource(LeaderboardRecord::default());
+        app.insert_resource(LevelHistory::default());
     }
 }

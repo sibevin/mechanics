@@ -6,6 +6,7 @@ mod ball;
 mod ball_interaction;
 mod field;
 mod leaderboard;
+mod level_builder;
 mod phase;
 mod plugin;
 mod startup;
