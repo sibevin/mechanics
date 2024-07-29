@@ -182,7 +182,7 @@ lazy_static! {
                 name: "SIMPLE",
                 balls: vec![
                     LevelBallConfig {
-                        ball_type: BallType::Stone,
+                        ball_type: BallType::Bomb,
                         property: BallProperty {
                             pos: Vec2::new(0.0, 0.0),
                             v: Vec2::new(0.0, 0.0),
@@ -192,7 +192,7 @@ lazy_static! {
                         control_params: BallControlParams::default(),
                     },
                     LevelBallConfig {
-                        ball_type: BallType::Stone,
+                        ball_type: BallType::Bomb,
                         property: BallProperty {
                             pos: Vec2::new(-10.0, 190.0),
                             v: Vec2::new(-10.0, -10.0),
@@ -202,7 +202,7 @@ lazy_static! {
                         control_params: BallControlParams::default(),
                     },
                     LevelBallConfig {
-                        ball_type: BallType::Stone,
+                        ball_type: BallType::Bomb,
                         property: BallProperty {
                             pos: Vec2::new(0.0, 170.0),
                             v: Vec2::new(12.0, 0.0),
@@ -212,7 +212,7 @@ lazy_static! {
                         control_params: BallControlParams::default(),
                     },
                     LevelBallConfig {
-                        ball_type: BallType::Stone,
+                        ball_type: BallType::Bomb,
                         property: BallProperty {
                             pos: Vec2::new(0.0, 150.0),
                             v: Vec2::new(-14.0, 0.0),
@@ -222,7 +222,7 @@ lazy_static! {
                         control_params: BallControlParams::default(),
                     },
                     LevelBallConfig {
-                        ball_type: BallType::Stone,
+                        ball_type: BallType::Bomb,
                         property: BallProperty {
                             pos: Vec2::new(0.0, 0.0),
                             v: Vec2::new(0.0, 0.0),
@@ -232,17 +232,17 @@ lazy_static! {
                         control_params: BallControlParams::default(),
                     },
                     LevelBallConfig {
-                        ball_type: BallType::Stone,
+                        ball_type: BallType::Goal,
                         property: BallProperty {
                             pos: Vec2::new(-60.0, 0.0),
-                            v: Vec2::new(0.0, 0.0),
+                            v: Vec2::new(1.0, 0.0),
                             radius: 30.0,
                             movement_type: BallMovementType::Movable,
                         },
                         control_params: BallControlParams::default(),
                     },
                     LevelBallConfig {
-                        ball_type: BallType::Stone,
+                        ball_type: BallType::Bomb,
                         property: BallProperty {
                             pos: Vec2::new(-60.0, -80.0),
                             v: Vec2::new(0.0, 0.0),

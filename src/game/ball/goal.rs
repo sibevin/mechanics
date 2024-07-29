@@ -1,6 +1,5 @@
 use super::*;
 use crate::app::theme;
-use bevy_prototype_lyon::prelude::*;
 use bevy_tweening::*;
 use std::time::Duration;
 
@@ -19,9 +18,10 @@ impl BallAbility for Ability {
     fn setup_ending_anime(&self, commands: &mut Commands, ball: &Ball) {
         setup_ending_anime(commands, ball);
     }
-    fn update_anime(&self, commands: &mut Commands, ball: &Ball) {
-        update_staring_anime(commands, ball);
-        update_running_anime(commands, ball);
+    fn update_starting_anime(&self, commands: &mut Commands, ball: &Ball) {
+        update_starting_anime(commands, ball);
+    }
+    fn update_ending_anime(&self, commands: &mut Commands, ball: &Ball) {
         update_ending_anime(commands, ball);
     }
 }
@@ -60,7 +60,7 @@ fn setup_ending_anime(commands: &mut Commands, ball: &Ball) {
     }
 }
 
-fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
+fn update_starting_anime(commands: &mut Commands, ball: &Ball) {
     if ball.state != BallState::Starting {
         return;
     }
@@ -262,10 +262,6 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                 });
         });
     }
-}
-
-fn update_running_anime(_commands: &mut Commands, _ball: &Ball) {
-    // TODO: Dynamic
 }
 
 fn update_ending_anime(commands: &mut Commands, ball: &Ball) {

@@ -96,7 +96,7 @@ fn record_hit_action(
     e2: Entity,
     b2: &Ball,
 ) {
-    let mut hit_status: &str = "none";
+    let hit_status: &str;
     let e1_action: HitAction;
     let e2_action: HitAction;
     match b1.ball_type() {
@@ -112,19 +112,26 @@ fn record_hit_action(
             }
         },
         BallType::Goal => match b2.ball_type() {
+            BallType::Stone => {
+                hit_status = "success";
+            }
             BallType::Goal => {
                 hit_status = "hit";
             }
             BallType::Bomb => {
                 hit_status = "hit";
             }
-            _ => (),
         },
         BallType::Bomb => match b2.ball_type() {
+            BallType::Stone => {
+                hit_status = "failure";
+            }
+            BallType::Goal => {
+                hit_status = "hit";
+            }
             BallType::Bomb => {
                 hit_status = "hit";
             }
-            _ => (),
         },
     }
     match hit_status {

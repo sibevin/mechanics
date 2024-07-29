@@ -1,6 +1,5 @@
 use super::*;
 use crate::app::theme;
-use bevy_prototype_lyon::prelude::*;
 use bevy_tweening::*;
 use std::time::Duration;
 
@@ -19,9 +18,10 @@ impl BallAbility for Ability {
     fn setup_ending_anime(&self, commands: &mut Commands, ball: &Ball) {
         setup_ending_anime(commands, ball);
     }
-    fn update_anime(&self, commands: &mut Commands, ball: &Ball) {
-        update_staring_anime(commands, ball);
-        update_running_anime(commands, ball);
+    fn update_starting_anime(&self, commands: &mut Commands, ball: &Ball) {
+        update_starting_anime(commands, ball);
+    }
+    fn update_ending_anime(&self, commands: &mut Commands, ball: &Ball) {
         update_ending_anime(commands, ball);
     }
 }
@@ -60,7 +60,7 @@ fn setup_ending_anime(commands: &mut Commands, ball: &Ball) {
     }
 }
 
-fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
+fn update_starting_anime(commands: &mut Commands, ball: &Ball) {
     if ball.state != BallState::Starting {
         return;
     }
@@ -164,57 +164,6 @@ fn update_staring_anime(commands: &mut Commands, ball: &Ball) {
                                 Fill::color(theme::BG_COLOR),
                             ));
                         }
-                    }
-                });
-        });
-    }
-}
-
-fn update_running_anime(commands: &mut Commands, ball: &Ball) {
-    if ball.state != BallState::Running || ball.property.movement_type != BallMovementType::Movable
-    {
-        return;
-    }
-    if let Some(mut entity_commands) = commands.get_entity(ball.dyn_entity()) {
-        entity_commands.despawn_descendants();
-        entity_commands.with_children(|parent| {
-            let z_layer = if ball.property.movement_type == BallMovementType::FixedReversed {
-                0.0
-            } else {
-                1.0
-            };
-            parent
-                .spawn(SpriteBundle {
-                    transform: Transform::from_xyz(0.0, 0.0, z_layer),
-                    ..default()
-                })
-                .with_children(|parent| {
-                    let mut last_pos = Vec2::ZERO;
-                    for tailing in ball.tailings().iter() {
-                        let mut line_builder = PathBuilder::new();
-                        line_builder.move_to(last_pos);
-                        line_builder.line_to(Vec2::new(
-                            tailing.x - ball.property.pos.x,
-                            tailing.y - ball.property.pos.y,
-                        ));
-                        parent.spawn((
-                            ShapeBundle {
-                                path: line_builder.build(),
-                                spatial: SpatialBundle {
-                                    transform: Transform::from_xyz(0.0, 0.0, z_layer + 0.0009),
-                                    ..default()
-                                },
-                                ..default()
-                            },
-                            Stroke {
-                                color: ball.ability.color().with_alpha(0.05),
-                                // color: ball.ability.color().mix(&theme::BG_COLOR, 0.9),
-                                options: StrokeOptions::DEFAULT
-                                    .with_line_width(ball.property.radius * 2.0)
-                                    .with_line_cap(LineCap::Round),
-                            },
-                        ));
-                        last_pos = *tailing - ball.property.pos;
                     }
                 });
         });

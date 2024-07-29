@@ -1,5 +1,5 @@
 use self::{
-    ball::{Ball, BallProperty},
+    ball::Ball,
     ball_interaction::{build_hit_map, calcuate_v_after_hit, HitAction},
 };
 use super::*;
@@ -109,15 +109,12 @@ fn state_update(
                     for action in actions.iter() {
                         match action {
                             HitAction::Move(info) => {
-                                dbg!("move");
                                 if b.check_hit_window(info.opponent_entity) {
-                                    dbg!("in_window");
                                     let new_v = calcuate_v_after_hit(
                                         &info.hit_type,
                                         &bp,
                                         &info.opponent_property,
                                     );
-                                    dbg!(new_v);
                                     bp.pos = bp.pos + new_v;
                                     bp.v = new_v;
                                     b.store_hit_entity(info.opponent_entity);
@@ -130,10 +127,8 @@ fn state_update(
                     }
                 }
                 if is_hit && b.property.movement_type == BallMovementType::Movable {
-                    dbg!("hit");
                     b.update_pos(bp.pos);
                     b.update_v(bp.v);
-                    dbg!(bp);
                     audio::play_se("hit", &mut commands, &asset_server, settings.as_ref());
                 }
                 if is_no_hit_detected {
