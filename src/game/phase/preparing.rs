@@ -31,17 +31,10 @@ impl PhaseBase for Phase {
             )
             .add_systems(
                 OnExit(self.state()),
-                (
-                    anime_effect::clear_anime_effect,
-                    state_exit,
-                    ui::despawn_ui::<OnPage>,
-                ),
+                (anime_effect::clear_anime_effect, state_exit),
             );
     }
 }
-
-#[derive(Component)]
-struct OnPage;
 
 fn state_enter(
     mut commands: Commands,
@@ -49,7 +42,7 @@ fn state_enter(
     mut game_status: ResMut<GameStatus>,
     mut key_binding: ResMut<key_binding::KeyBindingConfig>,
 ) {
-    game_status.mode = StatusMode::Preparing;
+    game_status.mode = StatusMode::Setup;
     key_binding.mode = key_binding::KeyBindingMode::Gaming;
     let dyn_entity = dyn_query.get_single().unwrap();
     let mut entity_commands = commands.get_entity(dyn_entity).unwrap();
@@ -80,6 +73,7 @@ fn state_update(
     settings: Res<Persistent<settings::Settings>>,
     asset_server: Res<AssetServer>,
     mut ball_tick: Local<u8>,
+    mut game_status: ResMut<GameStatus>,
 ) {
     if refresh_timer.0.tick(time.delta()).just_finished() {
         if *ball_tick == 0 {
@@ -160,11 +154,7 @@ fn state_update(
         let mut entities_to_despawn: HashSet<Entity> = HashSet::new();
         for tween_event in tween_completed_events.read() {
             if tween_event.user_data == STARTING_DONE_EVENT {
-                for (e, mut ball, _) in ball_query.iter_mut() {
-                    if e == tween_event.entity {
-                        ball.trigger_anime(BallState::Running);
-                    }
-                }
+                game_status.mode = StatusMode::Deploying;
             }
             if tween_event.user_data == ENDING_DONE_EVENT
                 || tween_event.user_data == ANIME_EFFECT_DONE_EVENT
@@ -180,4 +170,24 @@ fn state_update(
     }
 }
 
-fn state_exit() {}
+fn state_exit(
+    mut commands: Commands,
+    dyn_query: Query<Entity, With<GameDyn>>,
+    mut game_status: ResMut<GameStatus>,
+    mut key_binding: ResMut<key_binding::KeyBindingConfig>,
+) {
+    game_status.mode = StatusMode::Setup;
+    key_binding.mode = key_binding::KeyBindingMode::Gaming;
+    let dyn_entity = dyn_query.get_single().unwrap();
+    let mut entity_commands = commands.get_entity(dyn_entity).unwrap();
+    entity_commands.despawn_descendants();
+}
+
+fn start_running() {
+    // game_status.mode = StatusMode::Running;
+    // for (e, mut ball, _) in ball_query.iter_mut() {
+    //     if e == tween_event.entity {
+    //         ball.trigger_anime(BallState::Running);
+    //     }
+    // }
+}

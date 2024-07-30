@@ -6,8 +6,10 @@ use super::LevelHistory;
 #[derive(PartialEq, Default, Debug)]
 pub enum StatusMode {
     #[default]
-    Preparing,
+    Setup,
+    Deploying,
     Running,
+    Paused,
     Done,
 }
 
