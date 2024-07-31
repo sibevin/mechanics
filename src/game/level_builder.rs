@@ -182,7 +182,7 @@ lazy_static! {
                 name: "SIMPLE",
                 balls: vec![
                     LevelBallConfig {
-                        ball_type: BallType::Bomb,
+                        ball_type: BallType::Stone,
                         property: BallProperty {
                             pos: Vec2::new(0.0, 0.0),
                             v: Vec2::new(0.0, 0.0),

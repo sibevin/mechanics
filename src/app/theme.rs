@@ -20,7 +20,7 @@ pub const CONTROL_COLOR: Color = Color::srgb(0.463, 0.529, 0.671);
 
 pub const FONT: &str = "fonts/main.ttf";
 pub const FONT_TITLE: &str = "fonts/main.otf";
-pub const FONT_DIGIT: &str = "fonts/digit.otf";
+pub const FONT_DIGIT: &str = "fonts/digit.ttf";
 pub const FONT_HW: &str = "fonts/hw.ttf";
 
 pub const U_COLOR: Color = Color::srgb(1.0, 0.84, 0.2);

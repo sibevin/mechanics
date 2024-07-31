@@ -22,6 +22,7 @@ impl Plugin for GamePlugin {
                 TimerMode::Repeating,
             )))
             .init_state::<PhaseState>()
+            .add_systems(Update, (field::refresh_field,))
             .add_plugins((leaderboard::LeaderboardPlugin,));
         for phase in phase::PHASES {
             phase.build(app);

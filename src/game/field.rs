@@ -1,46 +1,28 @@
 use super::*;
-use crate::app::{self, theme, ui};
-use bevy::{ecs::schedule::SystemConfigs, window::WindowResized};
+use crate::app::{theme, ui};
 use bevy_prototype_lyon::prelude::*;
 
-pub const FIELD_BAR_H: f32 = 120.0;
-pub const FIELD_W: f32 = app::WINDOW_W;
-pub const FIELD_H: f32 = app::WINDOW_H;
-pub const FIELD_P: f32 = 12.0;
 pub const FIELD_LINE_W: f32 = ui::SPACE_SIZE * 0.5;
 pub const FIELD_COLOR: Color = theme::BG_COLOR;
 pub const FIELD_TEXT_COLOR: Color = theme::FG_COLOR;
 pub const FIELD_SB_TEXT_COLOR: Color = theme::SECONDARY_COLOR;
 
-pub fn field_systems() -> SystemConfigs {
-    (reset_field_on_window_resize, refresh_field)
-        .chain()
-        .into_configs()
-}
+const FIELD_REFRESH_TARGET: &str = "FIELD_REFRESH_TARGET";
 
-fn reset_field_on_window_resize(
-    mut resize_events: EventReader<WindowResized>,
-    mut game_status: ResMut<GameStatus>,
-) {
-    for _event in resize_events.read() {
-        game_status.is_refresh_required = true;
-    }
-}
-
-fn refresh_field(
+pub fn refresh_field(
     mut commands: Commands,
     bg_query: Query<Entity, With<GameBg>>,
     window_query: Query<&Window>,
     mut game_status: ResMut<GameStatus>,
 ) {
-    if game_status.is_refresh_required {
+    if !game_status.is_refreshed(FIELD_REFRESH_TARGET) {
         let bg_entity = bg_query.get_single().unwrap();
         let mut entity_commands = commands.get_entity(bg_entity).unwrap();
         entity_commands.despawn_descendants();
         entity_commands.with_children(|parent| {
             draw_grid_bg(parent, &window_query);
         });
-        game_status.is_refresh_required = false;
+        game_status.set_refreshed(FIELD_REFRESH_TARGET)
     }
 }
 

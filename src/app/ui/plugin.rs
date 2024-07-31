@@ -15,6 +15,7 @@ impl Plugin for AppUiPlugin {
         .insert_resource(timer::AppUiThrottleTimer(Timer::from_seconds(
             timer::UI_THROTTLE_SECS,
             TimerMode::Repeating,
-        )));
+        )))
+        .add_systems(Update, (refresh::refresh_on_resize,));
     }
 }

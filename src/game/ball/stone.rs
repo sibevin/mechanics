@@ -10,7 +10,7 @@ impl BallAbility for Ability {
         BallType::Stone
     }
     fn color(&self) -> Color {
-        theme::FG_COLOR
+        theme::SECONDARY_COLOR
     }
     fn setup_starting_anime(&self, commands: &mut Commands, ball: &Ball) {
         setup_starting_anime(commands, ball);

@@ -14,7 +14,7 @@ pub struct GameDyn;
 pub struct GameCover;
 
 pub fn startup(commands: &mut Commands, game_status: &mut ResMut<GameStatus>) {
-    game_status.is_refresh_required = true;
+    game_status.require_refresh(None);
     commands.spawn((
         SpatialBundle {
             transform: Transform::from_xyz(0.0, 0.0, GAME_BG_Z_INDEX),

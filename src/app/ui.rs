@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use bevy_alt_ui_navigation_lite::prelude::*;
 
 mod plugin;
+mod refresh;
 mod timer;
 
 pub use plugin::AppUiPlugin;

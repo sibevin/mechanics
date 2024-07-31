@@ -11,8 +11,7 @@ impl PhaseBase for Phase {
         app.add_systems(OnEnter(self.state()), state_enter)
             .add_systems(
                 Update,
-                (anime_end::handle_anime_end_events, field::field_systems())
-                    .run_if(in_state(self.state())),
+                (anime_end::handle_anime_end_events).run_if(in_state(self.state())),
             )
             .add_systems(
                 OnExit(self.state()),

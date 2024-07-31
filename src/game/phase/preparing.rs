@@ -5,7 +5,7 @@ use self::{
 use super::*;
 use crate::app::{
     anime_effect::{self, ANIME_EFFECT_DONE_EVENT},
-    audio, key_binding, settings, ui,
+    audio, key_binding, settings,
 };
 use bevy_persistent::prelude::*;
 use bevy_tweening::{component_animator_system, TweenCompleted};
@@ -25,7 +25,6 @@ impl PhaseBase for Phase {
                     state_update,
                     component_animator_system::<Ball>,
                     component_animator_system::<anime_effect::AnimeEffect>,
-                    field::field_systems(),
                 )
                     .run_if(in_state(self.state())),
             )

@@ -128,13 +128,14 @@ fn page_enter(mut commands: Commands, asset_server: Res<AssetServer>) {
                                         "main",
                                         true,
                                     );
+
                                     app::ui::build_link(
                                         parent,
                                         &asset_server,
                                         ButtonAction::Link(String::from(
-                                            "https://www.fontspace.com/segment7-font-f19825",
+                                            "https://www.fontspace.com/seven-segmentiments-font-f96192",
                                         )),
-                                        "Segment7 - by Cedders",
+                                        "Seven Segmentiments - by heaven castro",
                                         Some("globe-light"),
                                         "digit",
                                         true,
