@@ -175,7 +175,7 @@ fn state_exit(
     mut game_status: ResMut<GameStatus>,
     mut key_binding: ResMut<key_binding::KeyBindingConfig>,
 ) {
-    game_status.mode = StatusMode::Setup;
+    game_status.mode = StatusMode::Demo;
     key_binding.mode = key_binding::KeyBindingMode::Gaming;
     let dyn_entity = dyn_query.get_single().unwrap();
     let mut entity_commands = commands.get_entity(dyn_entity).unwrap();

@@ -2,12 +2,14 @@ use super::*;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct LevelBallConfig {
     pub ball_type: BallType,
     pub property: BallProperty,
     pub control_params: BallControlParams,
 }
 
+#[derive(Default, Debug)]
 pub struct LevelConfig {
     pub name: &'static str,
     pub balls: Vec<LevelBallConfig>,

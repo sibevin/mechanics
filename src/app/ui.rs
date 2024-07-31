@@ -7,6 +7,7 @@ mod refresh;
 mod timer;
 
 pub use plugin::AppUiPlugin;
+pub use refresh::*;
 
 pub const FONT_SIZE: f32 = 36.0;
 pub const BTN_FS: f32 = FONT_SIZE;

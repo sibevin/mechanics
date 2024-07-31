@@ -1,3 +1,4 @@
+use crate::app::theme;
 use crate::app::ui;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
@@ -29,6 +30,26 @@ pub enum BallType {
     Bomb,
 }
 
+impl BallType {
+    pub fn color(&self) -> Color {
+        match self {
+            BallType::Stone => theme::SECONDARY_COLOR,
+            BallType::Goal => theme::SUCCESS_COLOR,
+            BallType::Bomb => theme::FAILURE_COLOR,
+        }
+    }
+}
+
+impl ToString for BallType {
+    fn to_string(&self) -> String {
+        match self {
+            BallType::Stone => String::from("stone"),
+            BallType::Goal => String::from("goal"),
+            BallType::Bomb => String::from("bomb"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum BallState {
     Created,
@@ -37,6 +58,25 @@ pub enum BallState {
     Paused,
     Ending,
     Dead,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum BallControlType {
+    Angle,
+    Force,
+    Move2D,
+    Move1D,
+}
+
+impl ToString for BallControlType {
+    fn to_string(&self) -> String {
+        match self {
+            BallControlType::Angle => String::from("angle"),
+            BallControlType::Force => String::from("force"),
+            BallControlType::Move2D => String::from("move_2d"),
+            BallControlType::Move1D => String::from("move_1d"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -48,7 +88,6 @@ pub enum BallMovementType {
 
 pub trait BallAbility {
     fn ball_type(&self) -> BallType;
-    fn color(&self) -> Color;
     fn setup_starting_anime(&self, _commands: &mut Commands, _ball: &Ball) {}
     fn setup_ending_anime(&self, _commands: &mut Commands, _ball: &Ball) {}
     fn update_anime(&self, commands: &mut Commands, ball: &Ball) {
@@ -96,7 +135,7 @@ pub trait BallAbility {
                                     ..default()
                                 },
                                 Stroke {
-                                    color: self.color().with_alpha(0.05),
+                                    color: ball.color().with_alpha(0.05),
                                     options: StrokeOptions::DEFAULT
                                         .with_line_width(ball.property.radius * 2.0)
                                         .with_line_cap(LineCap::Round),
@@ -123,12 +162,19 @@ pub struct BallAnimeParams {
     pub alpha: f32,
 }
 
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct BallControlParams {
     pub x: Option<(f32, f32)>,
     pub y: Option<(f32, f32)>,
     pub force: Option<(f32, f32)>,
     pub angle: Option<(f32, f32)>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BallControlDisplay {
+    pub ball_type: Option<BallType>,
+    pub control_type: BallControlType,
+    pub text: String,
 }
 
 #[derive(Component)]
@@ -146,14 +192,6 @@ pub struct Ball {
     dyn_entity: Entity,
 }
 
-fn build_ability(ball_type: &BallType) -> Box<dyn BallAbility + Send + Sync> {
-    match ball_type {
-        BallType::Stone => Box::new(stone::Ability),
-        BallType::Goal => Box::new(goal::Ability),
-        BallType::Bomb => Box::new(bomb::Ability),
-    }
-}
-
 impl Ball {
     pub fn create_sprite(
         ball_type: BallType,
@@ -162,7 +200,6 @@ impl Ball {
         property: BallProperty,
         control_params: BallControlParams,
     ) {
-        let ability = build_ability(&ball_type);
         let mut bg_entity: Entity = Entity::PLACEHOLDER;
         let mut dyn_entity: Entity = Entity::PLACEHOLDER;
         let z_layer = if property.movement_type == BallMovementType::FixedReversed {
@@ -174,7 +211,7 @@ impl Ball {
             SpriteBundle {
                 transform: Transform::from_xyz(property.pos.x, property.pos.y, z_layer),
                 sprite: Sprite {
-                    color: ability.color(),
+                    color: ball_type.color(),
                     ..default()
                 },
                 ..default()
@@ -186,7 +223,7 @@ impl Ball {
                 .spawn(SpriteBundle {
                     transform: Transform::from_xyz(0.0, 0.0, z_layer),
                     sprite: Sprite {
-                        color: ability.color(),
+                        color: ball_type.color(),
                         ..default()
                     },
                     ..default()
@@ -196,7 +233,7 @@ impl Ball {
                 .spawn(SpriteBundle {
                     transform: Transform::from_xyz(0.0, 0.0, z_layer),
                     sprite: Sprite {
-                        color: ability.color(),
+                        color: ball_type.color(),
                         ..default()
                     },
                     ..default()
@@ -222,7 +259,11 @@ impl Ball {
         dyn_entity: Entity,
     ) -> Self {
         Self {
-            ability: build_ability(&ball_type),
+            ability: match ball_type {
+                BallType::Stone => Box::new(stone::Ability),
+                BallType::Goal => Box::new(goal::Ability),
+                BallType::Bomb => Box::new(bomb::Ability),
+            },
             property,
             anime_params: BallAnimeParams {
                 radius: 0.0,
@@ -240,6 +281,9 @@ impl Ball {
     }
     pub fn ball_type(&self) -> BallType {
         self.ability.ball_type()
+    }
+    pub fn color(&self) -> Color {
+        self.ball_type().color()
     }
     pub fn update_pos(&mut self, pos: Vec2) {
         self.property.pos = pos;
@@ -312,6 +356,49 @@ impl Ball {
     pub fn trigger_ending(&mut self, commands: &mut Commands) {
         self.ability.setup_ending_anime(commands, self);
         self.trigger_anime(BallState::Ending);
+    }
+    pub fn control_displays(&self) -> Vec<BallControlDisplay> {
+        let mut displays = vec![];
+        if self.control_params.x.is_some() && self.control_params.x.is_some() {
+            displays.push(BallControlDisplay {
+                ball_type: Some(self.ball_type()),
+                control_type: BallControlType::Move2D,
+                text: format!(
+                    "({:?},{:?})",
+                    self.control_params.x.unwrap(),
+                    self.control_params.y.unwrap()
+                ),
+            })
+        }
+        if let Some(x) = self.control_params.x {
+            displays.push(BallControlDisplay {
+                ball_type: Some(self.ball_type()),
+                control_type: BallControlType::Move1D,
+                text: format!("{:?}", x),
+            })
+        }
+        if let Some(y) = self.control_params.y {
+            displays.push(BallControlDisplay {
+                ball_type: Some(self.ball_type()),
+                control_type: BallControlType::Move1D,
+                text: format!("{:?}", y),
+            })
+        }
+        if let Some(angle) = self.control_params.angle {
+            displays.push(BallControlDisplay {
+                ball_type: Some(self.ball_type()),
+                control_type: BallControlType::Angle,
+                text: format!("{:?}", angle),
+            })
+        }
+        if let Some(force) = self.control_params.force {
+            displays.push(BallControlDisplay {
+                ball_type: Some(self.ball_type()),
+                control_type: BallControlType::Force,
+                text: format!("{:?}", force),
+            })
+        }
+        displays
     }
 }
 

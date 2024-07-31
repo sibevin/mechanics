@@ -37,17 +37,21 @@ fn build_page_layout() -> NodeBundle {
     }
 }
 
+const TITLE_P: f32 = 4.0;
+
 fn build_game_title(parent: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     parent
         .spawn(NodeBundle {
             style: Style {
                 position_type: PositionType::Absolute,
-                top: ui::px_p(ui::PAGE_PADDING),
-                left: ui::px_p(ui::PAGE_PADDING),
+                top: ui::px_p(ui::PAGE_PADDING - TITLE_P),
+                left: ui::px_p(ui::PAGE_PADDING - TITLE_P),
                 align_items: AlignItems::Center,
                 column_gap: ui::px_p(2.0),
+                padding: UiRect::all(ui::px_p(TITLE_P)),
                 ..default()
             },
+            background_color: theme::BG_COLOR.into(),
             ..default()
         })
         .with_children(|parent| {
@@ -75,7 +79,7 @@ fn build_page_title(
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,
                 column_gap: ui::px_p(4.0),
-                padding: UiRect::all(ui::px_p(2.0)),
+                padding: UiRect::new(ui::px_p(4.0), ui::px_p(4.0), ui::px_p(1.0), ui::px_p(2.0)),
                 ..default()
             },
             background_color: theme::BG_COLOR.into(),

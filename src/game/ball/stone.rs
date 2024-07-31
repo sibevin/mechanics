@@ -9,9 +9,6 @@ impl BallAbility for Ability {
     fn ball_type(&self) -> BallType {
         BallType::Stone
     }
-    fn color(&self) -> Color {
-        theme::SECONDARY_COLOR
-    }
     fn setup_starting_anime(&self, commands: &mut Commands, ball: &Ball) {
         setup_starting_anime(commands, ball);
     }
@@ -93,9 +90,7 @@ fn update_starting_anime(commands: &mut Commands, ball: &Ball) {
                                     },
                                     ..default()
                                 },
-                                Fill::color(
-                                    ball.ability.color().with_alpha(ball.anime_params.alpha),
-                                ),
+                                Fill::color(ball.color().with_alpha(ball.anime_params.alpha)),
                             ));
                         }
                         BallMovementType::Fixed => {
@@ -109,7 +104,7 @@ fn update_starting_anime(commands: &mut Commands, ball: &Ball) {
                                     ..default()
                                 },
                                 Stroke::new(
-                                    ball.ability.color().with_alpha(ball.anime_params.alpha),
+                                    ball.color().with_alpha(ball.anime_params.alpha),
                                     BALL_LINE_W,
                                 ),
                             ));
@@ -124,7 +119,7 @@ fn update_starting_anime(commands: &mut Commands, ball: &Ball) {
                                     ..default()
                                 },
                                 Stroke::new(
-                                    ball.ability.color().with_alpha(ball.anime_params.alpha),
+                                    ball.color().with_alpha(ball.anime_params.alpha),
                                     BALL_LINE_W,
                                 ),
                             ));
@@ -142,7 +137,7 @@ fn update_starting_anime(commands: &mut Commands, ball: &Ball) {
                                     ..default()
                                 },
                                 Stroke {
-                                    color: ball.ability.color().with_alpha(ball.anime_params.alpha),
+                                    color: ball.color().with_alpha(ball.anime_params.alpha),
                                     options: StrokeOptions::DEFAULT
                                         .with_line_width(BALL_LINE_W)
                                         .with_line_cap(LineCap::Round),
@@ -158,7 +153,7 @@ fn update_starting_anime(commands: &mut Commands, ball: &Ball) {
                                     ..default()
                                 },
                                 Stroke::new(
-                                    ball.ability.color().with_alpha(ball.anime_params.alpha),
+                                    ball.color().with_alpha(ball.anime_params.alpha),
                                     BALL_LINE_W,
                                 ),
                                 Fill::color(theme::BG_COLOR),
@@ -192,7 +187,7 @@ fn update_ending_anime(commands: &mut Commands, ball: &Ball) {
                             path: GeometryBuilder::build_as(&shape),
                             ..default()
                         },
-                        Fill::color(ball.ability.color().with_alpha(ball.anime_params.alpha)),
+                        Fill::color(ball.color().with_alpha(ball.anime_params.alpha)),
                     ));
                 });
         });
