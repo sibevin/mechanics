@@ -146,7 +146,7 @@ const LV_CIRCLE_R: f32 = ui::FONT_SIZE * 3.0;
 const LV_LINE_W: f32 = ui::FONT_SIZE * 0.2;
 const LV_CONTROL_SIZE: f32 = ui::FONT_SIZE / 9.0 * 20.0;
 const LV_CONTROL_GAP: f32 = LV_CONTROL_SIZE * 0.2;
-const LV_CONTROL_FS: f32 = LV_CONTROL_SIZE * 0.5;
+const LV_CONTROL_FS: f32 = LV_CONTROL_SIZE * 0.3;
 const LV_TITLE_FS: f32 = ui::FONT_SIZE * 2.0;
 const LV_NUM_FS: f32 = ui::FONT_SIZE * 1.5;
 const LV_SUB_NUM_FS: f32 = LV_NUM_FS * 0.6;
@@ -182,7 +182,6 @@ fn draw_game_fg(
             ..default()
         },))
         .with_children(|parent| {
-            let lv_x_font_base = LV_CONTROL_GAP * 2.0 + LV_CONTROL_SIZE;
             let mut lv_y = 0.0;
             let shape = shapes::Circle {
                 radius: LV_CIRCLE_R,
@@ -275,6 +274,7 @@ fn draw_game_fg(
             } else {
                 &game_status.control_displays
             };
+            let lv_x_font_base = LV_CONTROL_GAP * 2.0 + LV_CONTROL_SIZE * 0.8;
             for control in controls.iter() {
                 let ball_type_str: String;
                 let control_num_color: Color;
@@ -311,9 +311,9 @@ fn draw_game_fg(
                     ..default()
                 },));
                 let text_shadow_x = if control.control_type == BallControlType::Move2D {
-                    ui::FONT_SIZE * 1.3
+                    ui::FONT_SIZE * 1.4
                 } else {
-                    ui::FONT_SIZE * 5.0
+                    ui::FONT_SIZE * 4.0
                 };
                 let mut line_builder = PathBuilder::new();
                 let text_shadow_y = lv_y - LV_CONTROL_FS / 2.0 - LV_SHADOW_OFFSET;
@@ -332,8 +332,8 @@ fn draw_game_fg(
                 ));
                 if control.control_type == BallControlType::Move2D {
                     let mut line_builder = PathBuilder::new();
-                    line_builder.move_to(Vec2::new(text_shadow_x, lv_y - LV_CONTROL_SIZE * 0.6));
-                    line_builder.line_to(Vec2::new(text_shadow_x, lv_y + LV_CONTROL_SIZE * 0.6));
+                    line_builder.move_to(Vec2::new(text_shadow_x, lv_y - LV_CONTROL_SIZE * 0.5));
+                    line_builder.line_to(Vec2::new(text_shadow_x, lv_y + LV_CONTROL_SIZE * 0.5));
                     parent.spawn((
                         ShapeBundle {
                             path: line_builder.build(),
